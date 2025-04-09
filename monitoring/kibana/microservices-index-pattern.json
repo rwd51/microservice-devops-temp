@@ -1,0 +1,9 @@
+{
+    "attributes": {
+      "title": "microservices-logs-*",
+      "timeFieldName": "timestamp",
+      "fields": "[]",
+      "fieldFormatMap": "{}",
+      "allowNoIndex": false
+    }
+  }

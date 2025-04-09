@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  labels:
+    app: payment-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - name: payment-service
+          image: rwdnas1/payment-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8003
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://postgres:postgres@host.minikube.internal:5435/payment_db"
+            - name: RABBITMQ_HOST
+              value: "host.minikube.internal"  # Reference to the host machine where RabbitMQ runs
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: NGINX_HOST
+              value: "nginx-service"
+            # - name: LOGSTASH_HOST
+            #   value: "host.docker.internal"
+            # - name: LOGSTASH_PORT
+            #   value: "5044"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+spec:
+  type: ClusterIP
+  selector:
+    app: payment-service
+  ports:
+    - protocol: TCP
+      port: 8003
+      targetPort: 8003

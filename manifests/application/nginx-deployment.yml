@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      volumes:
+        - name: nginx-config-volume
+          configMap:
+            name: nginx-config
+      containers:
+        - name: nginx
+          image: nginx:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/conf.d/auth-service.conf
+              subPath: auth-service.conf
+              readOnly: true
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/conf.d/train-service.conf
+              subPath: train-service.conf
+              readOnly: true
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/conf.d/payment-service.conf
+              subPath: payment-service.conf
+              readOnly: true
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/conf.d/notification-service.conf
+              subPath: notification-service.conf
+              readOnly: true

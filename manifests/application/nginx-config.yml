@@ -1,0 +1,213 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  nginx.conf: |
+    worker_processes auto;
+
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                          '$status $body_bytes_sent "$http_referer" '
+                          '"$http_user_agent" "$http_x_forwarded_for"';
+
+        access_log /var/log/nginx/access.log main;
+        error_log /var/log/nginx/error.log;
+
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+
+        sendfile on;
+        keepalive_timeout 65;
+
+        # Rate limiting
+        limit_req_zone $binary_remote_addr zone=mylimit:10m rate=10r/s;
+
+        upstream auth-service {
+            server auth-service.default.svc.cluster.local:8001;
+        }
+
+        upstream train-service {
+            server train-service.default.svc.cluster.local:8002;
+        }
+
+        upstream payment-service {
+            server payment-service.default.svc.cluster.local:8003;
+        }
+
+        upstream notification-service {
+            server notification-service.default.svc.cluster.local:8004;
+        }
+
+        server {
+            listen 80;
+
+            # Rate limiting
+            limit_req zone=mylimit burst=20 nodelay;
+
+            # Includes service-specific configurations inside the server block
+            include /etc/nginx/conf.d/auth-service.conf;
+            include /etc/nginx/conf.d/train-service.conf;
+            include /etc/nginx/conf.d/payment-service.conf;
+            include /etc/nginx/conf.d/notification-service.conf;
+
+            location / {
+                root /usr/share/nginx/html;
+                try_files $uri $uri/ =404;
+            }
+        }
+    }
+
+  auth-service.conf: |
+    # Auth service configuration
+    location /auth {
+        proxy_pass http://auth-service/auth;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /token {
+        proxy_pass http://auth-service/token;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /register {
+        proxy_pass http://auth-service/register;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /verify-token {
+        proxy_pass http://auth-service/verify-token;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Authorization $http_authorization;
+        proxy_set_header Content-Length "";
+        proxy_pass_request_body off;
+    }
+
+    location @error401 {
+        default_type application/json;
+        return 401 '{"error": "Unauthorized", "message": "Invalid or expired token"}';
+    }
+
+  train-service.conf: |
+    # Train service configuration
+    location /train {
+        proxy_pass http://train-service/train;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /train/search {
+        proxy_pass http://train-service/train/search;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location ~ ^/train/(\d+)$ {
+        proxy_pass http://train-service/train/$1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /ticket {
+        proxy_pass http://train-service/ticket;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location ~ ^/ticket/(\d+)$ {
+        proxy_pass http://train-service/ticket/$1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # Protected route
+    location /ticket/book {
+        auth_request /verify-token;
+        proxy_pass http://train-service/ticket/book;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Authorization $http_authorization;
+
+        error_page 401 = @error401;
+    }
+
+    # Protected route
+    location /ticket/confirm {
+        auth_request /verify-token;
+        proxy_pass http://train-service/ticket/confirm;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Authorization $http_authorization;
+
+        error_page 401 = @error401;
+    }
+
+  payment-service.conf: |
+    # Payment service configuration
+    location /payment {
+        proxy_pass http://payment-service/payment;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /payment/initiate {
+        auth_request /verify-token;
+        proxy_pass http://payment-service/payment/initiate;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Authorization $http_authorization;
+
+        error_page 401 = @error401;
+    }
+
+    location /payment/confirm {
+        auth_request /verify-token;
+        proxy_pass http://payment-service/payment/confirm;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Authorization $http_authorization;
+
+        error_page 401 = @error401;
+    }
+
+  notification-service.conf: |
+    # Notification service configuration
+    location /notification {
+        proxy_pass http://notification-service/notification;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /notification/email {
+        auth_request /verify-token;
+        proxy_pass http://notification-service/notification/email;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Authorization $http_authorization;
+
+        error_page 401 = @error401;
+    }

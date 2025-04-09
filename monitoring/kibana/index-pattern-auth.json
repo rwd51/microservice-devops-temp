@@ -1,0 +1,9 @@
+{
+  "attributes": {
+    "title": "auth-service-logs-*",
+    "timeFieldName": "timestamp",
+    "fields": "[]",
+    "fieldFormatMap": "{}",
+    "allowNoIndex": false
+  }
+}

@@ -1,0 +1,11 @@
+venv
+*venv*
+postgres-data
+postgres-*-data
+*pycache*
+*.pyc
+redis-data
+logs
+*logs*
+.DS_Store
+

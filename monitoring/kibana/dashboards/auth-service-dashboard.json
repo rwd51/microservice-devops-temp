@@ -1,0 +1,47 @@
+{
+    "attributes": {
+      "title": "Auth Service Logs Dashboard",
+      "hits": 0,
+      "description": "Dashboard for monitoring auth service logs",
+      "panelsJSON": "[{\"version\":\"8.12.0\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":0,\"w\":24,\"h\":8,\"i\":\"1\"},\"panelIndex\":\"1\",\"embeddableConfig\":{\"title\":\"Auth Service - Log Levels\"},\"panelRefName\":\"panel_0\"},{\"version\":\"8.12.0\",\"type\":\"visualization\",\"gridData\":{\"x\":24,\"y\":0,\"w\":24,\"h\":8,\"i\":\"2\"},\"panelIndex\":\"2\",\"embeddableConfig\":{\"title\":\"Auth Service - API Endpoints\"},\"panelRefName\":\"panel_1\"},{\"version\":\"8.12.0\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":8,\"w\":48,\"h\":8,\"i\":\"3\"},\"panelIndex\":\"3\",\"embeddableConfig\":{\"title\":\"Auth Service - Request Count\"},\"panelRefName\":\"panel_2\"},{\"version\":\"8.12.0\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":16,\"w\":48,\"h\":10,\"i\":\"4\"},\"panelIndex\":\"4\",\"embeddableConfig\":{\"title\":\"Auth Service - Request Duration (ms)\"},\"panelRefName\":\"panel_3\"},{\"version\":\"8.12.0\",\"type\":\"search\",\"gridData\":{\"x\":0,\"y\":26,\"w\":48,\"h\":16,\"i\":\"5\"},\"panelIndex\":\"5\",\"embeddableConfig\":{\"title\":\"Recent Auth Service Logs\",\"columns\":[\"timestamp\",\"level\",\"log_message\",\"log_type\"],\"sort\":[\"timestamp\",\"desc\"]},\"panelRefName\":\"panel_4\"}]",
+      "optionsJSON": "{\"useMargins\":true,\"hidePanelTitles\":false}",
+      "version": 1,
+      "timeRestore": true,
+      "timeTo": "now",
+      "timeFrom": "now-24h",
+      "refreshInterval": {
+        "pause": false,
+        "value": 30000
+      },
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"query\":{\"language\":\"kuery\",\"query\":\"\"},\"filter\":[]}"
+      }
+    },
+    "references": [
+      {
+        "name": "panel_0",
+        "type": "visualization",
+        "id": "auth-log-levels-pie"
+      },
+      {
+        "name": "panel_1",
+        "type": "visualization",
+        "id": "auth-endpoints-pie"
+      },
+      {
+        "name": "panel_2",
+        "type": "visualization",
+        "id": "auth-request-count"
+      },
+      {
+        "name": "panel_3",
+        "type": "visualization",
+        "id": "auth-request-duration"
+      },
+      {
+        "name": "panel_4",
+        "type": "search",
+        "id": "auth-recent-logs"
+      }
+    ]
+  }

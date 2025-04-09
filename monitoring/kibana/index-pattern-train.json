@@ -1,0 +1,9 @@
+{
+    "attributes": {
+      "title": "train-service-logs-*",
+      "timeFieldName": "timestamp",
+      "fields": "[]",
+      "fieldFormatMap": "{}",
+      "allowNoIndex": false
+    }
+  }

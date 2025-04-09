@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  labels:
+    app: notification-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: rwdnas1/notification-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8004
+          env:
+            - name: RABBITMQ_HOST
+              value: "host.minikube.internal"  # Reference to the host machine where RabbitMQ runs
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: NGINX_HOST
+              value: "nginx-service"
+            - name: SMTP_SERVER
+              value: "smtp.mailtrap.io"  # For development purposes
+            - name: SMTP_PORT
+              value: "2525"  # For development purposes
+            - name: SMTP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: notification-secrets
+                  key: smtp_username
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: notification-secrets
+                  key: smtp_password
+            - name: FROM_EMAIL
+              value: "noreply@trainbooking.com"
+            - name: ENVIRONMENT
+              value: "development"
+            # - name: LOGSTASH_HOST
+            #   value: "host.docker.internal"
+            # - name: LOGSTASH_PORT
+            #   value: "5044"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+spec:
+  type: ClusterIP
+  selector:
+    app: notification-service
+  ports:
+    - protocol: TCP
+      port: 8004
+      targetPort: 8004
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: notification-secrets
+type: Opaque
+data:
+  smtp_username: ZHVtbXl1c2VyICMgQmFzZTY0IGVuY29kZWQ=  # dummy value, base64 encoded
+  smtp_password: ZHVtbXlwYXNzICMgQmFzZTY0IGVuY29kZWQ=  # dummy value, base64 encoded
